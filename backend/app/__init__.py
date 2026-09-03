@@ -9,9 +9,12 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = os.getenv("SESSION_SECRET_KEY", "dev-secret")
 
-    CORS(app,
-         origins=[os.getenv("FRONTEND_URL", "http://localhost:5173"), "http://localhost:5173"],
-         supports_credentials=True)
+    allowed_origins = [
+        os.getenv("FRONTEND_URL", "http://localhost:5173"),
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    CORS(app, origins=allowed_origins, supports_credentials=True)
 
     from .blueprints.auth import auth_bp
     from .blueprints.roster import roster_bp
