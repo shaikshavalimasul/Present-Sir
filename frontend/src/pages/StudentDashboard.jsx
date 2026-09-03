@@ -38,6 +38,7 @@ export default function StudentDashboard() {
         code: code.toUpperCase(),
         student_lat: location.lat,
         student_lng: location.lng,
+        student_accuracy: location.accuracy,
         fingerprint_hash,
       });
       setResult({ success: true, ...data });
@@ -76,7 +77,7 @@ export default function StudentDashboard() {
                 ❌ {result.error}
                 {result.distance_m != null && (
                   <div className="mt-1">
-                    You are <strong>{result.distance_m}m</strong> away. Allowed radius: <strong>{result.radius_m}m</strong>
+                    Raw distance: <strong>{result.distance_m}m</strong> · Effective: <strong>{result.effective_distance_m}m</strong> · Allowed radius: <strong>{result.radius_m}m</strong>
                   </div>
                 )}
               </>

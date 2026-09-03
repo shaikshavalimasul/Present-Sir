@@ -24,6 +24,7 @@ def submit():
     code = (data.get("code") or "").strip().upper()
     student_lat = data.get("student_lat")
     student_lng = data.get("student_lng")
+    student_accuracy = float(data.get("student_accuracy") or 0)
     fingerprint_hash = data.get("fingerprint_hash") or ""
 
     if not code or student_lat is None or student_lng is None or not fingerprint_hash:
@@ -47,9 +48,10 @@ def submit():
     if dup.data:
         return jsonify({"error": "Attendance already submitted for this session"}), 409
 
-    # Haversine distance
-    distance = haversine(student_lat, student_lng, session["teacher_lat"], session["teacher_lng"])
-    status = "present" if distance <= session["radius_m"] else "absent"
+    # Haversine distance — subtract student GPS accuracy to get effective distance
+    raw_distance = haversine(student_lat, student_lng, session["teacher_lat"], session["teacher_lng"])
+    effective_distance = max(0.0, raw_distance - student_accuracy)
+    status = "present" if effective_distance <= session["radius_m"] else "absent"
     now_iso = datetime.now(timezone.utc).isoformat()
 
     db.table("attendance").insert({
@@ -58,7 +60,7 @@ def submit():
         "status": status,
         "student_lat": student_lat,
         "student_lng": student_lng,
-        "distance_m": round(distance, 2),
+        "distance_m": round(raw_distance, 2),
         "submitted_at": now_iso,
     }).execute()
 
@@ -66,11 +68,12 @@ def submit():
         return jsonify({
             "error": "You are outside the classroom range",
             "status": "absent",
-            "distance_m": round(distance, 2),
+            "distance_m": round(raw_distance, 2),
+            "effective_distance_m": round(effective_distance, 2),
             "radius_m": session["radius_m"],
         }), 400
 
-    return jsonify({"message": "Attendance marked present!", "status": "present", "distance_m": round(distance, 2)})
+    return jsonify({"message": "Attendance marked present!", "status": "present", "distance_m": round(raw_distance, 2)})
 
 
 @attendance_bp.get("/session/<session_id>/pdf")
