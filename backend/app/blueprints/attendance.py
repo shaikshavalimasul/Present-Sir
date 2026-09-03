@@ -48,9 +48,11 @@ def submit():
     if dup.data:
         return jsonify({"error": "Attendance already submitted for this session"}), 409
 
-    # Haversine distance — subtract student GPS accuracy to get effective distance
+    # Haversine distance — subtract both teacher and student GPS accuracy
     raw_distance = haversine(student_lat, student_lng, session["teacher_lat"], session["teacher_lng"])
-    effective_distance = max(0.0, raw_distance - student_accuracy)
+    teacher_accuracy = float(session.get("teacher_accuracy") or 0)
+    combined_accuracy = student_accuracy + teacher_accuracy
+    effective_distance = max(0.0, raw_distance - combined_accuracy)
     status = "present" if effective_distance <= session["radius_m"] else "absent"
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -60,7 +62,7 @@ def submit():
         "status": status,
         "student_lat": student_lat,
         "student_lng": student_lng,
-        "distance_m": round(raw_distance, 2),
+        "distance_m": round(effective_distance, 2),
         "submitted_at": now_iso,
     }).execute()
 
@@ -68,12 +70,11 @@ def submit():
         return jsonify({
             "error": "You are outside the classroom range",
             "status": "absent",
-            "distance_m": round(raw_distance, 2),
-            "effective_distance_m": round(effective_distance, 2),
+            "distance_m": round(effective_distance, 2),
             "radius_m": session["radius_m"],
         }), 400
 
-    return jsonify({"message": "Attendance marked present!", "status": "present", "distance_m": round(raw_distance, 2)})
+    return jsonify({"message": "Attendance marked present!", "status": "present", "distance_m": round(effective_distance, 2)})
 
 
 @attendance_bp.get("/session/<session_id>/pdf")

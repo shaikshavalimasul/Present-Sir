@@ -19,6 +19,7 @@ def start_session():
     teacher_id = data.get("teacher_id")
     teacher_lat = data.get("teacher_lat")
     teacher_lng = data.get("teacher_lng")
+    teacher_accuracy = float(data.get("teacher_accuracy") or 0)
     radius_m = int(data.get("radius_m", 40))
     subject = (data.get("subject") or "General").strip()
 
@@ -38,6 +39,7 @@ def start_session():
         "code": code,
         "teacher_lat": teacher_lat,
         "teacher_lng": teacher_lng,
+        "teacher_accuracy": teacher_accuracy,
         "radius_m": radius_m,
         "is_active": True,
     }).execute()

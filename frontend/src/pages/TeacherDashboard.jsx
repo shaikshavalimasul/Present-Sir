@@ -51,6 +51,7 @@ export default function TeacherDashboard() {
         teacher_id: teacher.id,
         teacher_lat: location.lat,
         teacher_lng: location.lng,
+        teacher_accuracy: location.accuracy,
         radius_m: Number(form.radius_m),
         subject: form.subject || "General",
       });

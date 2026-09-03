@@ -77,7 +77,7 @@ export default function StudentDashboard() {
                 ❌ {result.error}
                 {result.distance_m != null && (
                   <div className="mt-1">
-                    Raw distance: <strong>{result.distance_m}m</strong> · Effective: <strong>{result.effective_distance_m}m</strong> · Allowed radius: <strong>{result.radius_m}m</strong>
+                    You are <strong>{result.distance_m}m</strong> away. Allowed radius: <strong>{result.radius_m}m</strong>
                   </div>
                 )}
               </>
