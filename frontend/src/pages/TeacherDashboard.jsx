@@ -139,6 +139,10 @@ export default function TeacherDashboard() {
             {error && <div className="alert alert-error">{error}</div>}
             {geoError && <div className="alert alert-error">{geoError}</div>}
 
+            <div className="alert alert-warning">
+              ⚠️ <strong>Important:</strong> For accurate results, capture location on a <strong>mobile device</strong> (not laptop). Laptops use WiFi-based location which can be 100s of meters off.
+            </div>
+
             <div className="mb-2">
               <button className="btn btn-secondary" onClick={fetchGeo} disabled={geoLoading}>
                 {geoLoading ? "📡 Fetching…" : "📍 Capture My Location"}
@@ -146,6 +150,11 @@ export default function TeacherDashboard() {
               {location && (
                 <div className="loc-box mt-1">
                   ✅ Lat: {location.lat.toFixed(6)} · Lng: {location.lng.toFixed(6)} · Accuracy: ±{location.accuracy.toFixed(0)}m
+                  {location.accuracy > 100 && (
+                    <div className="mt-1" style={{ color: "#c05621", fontWeight: 600 }}>
+                      ⚠️ Very poor accuracy (±{location.accuracy.toFixed(0)}m). Please use a mobile device or move near a window and re-capture.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -161,6 +170,11 @@ export default function TeacherDashboard() {
                 <input type="number" min="10" max="500" value={form.radius_m}
                   onChange={e => setForm({ ...form, radius_m: e.target.value })} required />
               </div>
+              {location && location.accuracy > 100 && (
+                <div className="alert alert-info" style={{ fontSize: "0.83rem" }}>
+                  💡 Tip: Since your accuracy is poor, set radius to at least <strong>{Math.ceil(location.accuracy + 50)}m</strong> to avoid false rejections.
+                </div>
+              )}
               <button className="btn btn-success btn-block" disabled={loading || !location}>
                 {loading ? "Starting…" : "▶ Start Session"}
               </button>
