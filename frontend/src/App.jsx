@@ -13,30 +13,38 @@ import StudentDashboard from "./pages/StudentDashboard";
 
 function StudentAutoLogin({ children }) {
   const nav = useNavigate();
-  const [checking, setChecking] = useState(!getStudent());
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (getStudent()) { setChecking(false); return; }
+    // If already logged in this session, skip
+    if (getStudent()) { setDone(true); return; }
+
     const token = getToken();
-    if (!token) { setChecking(false); return; }
-    // Token exists in localStorage — verify with backend
+    console.log("Auto-login: token found =", !!token, token?.slice(0, 8));
+
+    if (!token) { setDone(true); return; }
+
     api.post("/auth/student/verify-token", { token })
       .then(({ data }) => {
+        console.log("Verify response:", data);
         if (data.matched) {
           saveStudent(data.student);
           nav("/student/dashboard", { replace: true });
         } else {
-          setChecking(false);
+          setDone(true);
         }
       })
-      .catch(() => setChecking(false));
+      .catch((err) => {
+        console.log("Verify error:", err);
+        setDone(true);
+      });
   }, []);
 
-  if (checking) {
+  if (!done && !getStudent()) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", flexDirection: "column", gap: "1rem" }}>
-        <div style={{ fontSize: "2rem" }}>📍</div>
-        <p style={{ color: "#4a5568" }}>Logging you in…</p>
+        <div style={{ fontSize: "2.5rem" }}>📍</div>
+        <p style={{ color: "#4a5568", fontSize: "1rem" }}>Logging you in…</p>
       </div>
     );
   }
@@ -47,6 +55,7 @@ function StudentAutoLogin({ children }) {
 function TeacherRoute({ children }) {
   return getTeacher() ? children : <Navigate to="/teacher/login" replace />;
 }
+
 function StudentRoute({ children }) {
   return getStudent() ? children : <Navigate to="/student/login" replace />;
 }

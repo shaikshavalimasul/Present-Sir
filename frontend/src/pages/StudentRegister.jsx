@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api";
-import { saveStudent, saveToken } from "../auth";
+import { saveStudent, saveToken, getToken } from "../auth";
 
 export default function StudentRegister() {
   const [form, setForm] = useState({ name: "", admission_number: "" });
@@ -17,10 +17,10 @@ export default function StudentRegister() {
         name: form.name.trim(),
         admission_number: form.admission_number.trim(),
       });
-      // Save token permanently in localStorage — this is the auto-login key
       saveToken(data.token);
       saveStudent(data.student);
-      nav("/student/dashboard");
+      console.log("Registered. Token saved:", data.token.slice(0, 8));
+      nav("/student/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed");
     } finally { setLoading(false); }
