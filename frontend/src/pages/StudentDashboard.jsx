@@ -38,7 +38,6 @@ export default function StudentDashboard() {
         code: code.toUpperCase(),
         student_lat: location.lat,
         student_lng: location.lng,
-        student_accuracy: location.accuracy,
         fingerprint_hash,
       });
       setResult({ success: true, ...data });
@@ -71,15 +70,10 @@ export default function StudentDashboard() {
         {result && (
           <div className={`alert ${result.success ? "alert-success" : "alert-error"}`}>
             {result.success ? (
-              <>✅ <strong>Attendance marked PRESENT!</strong> Distance: {result.distance_m}m</>
+              <>✅ <strong>{result.message}</strong></>
             ) : (
               <>
                 ❌ {result.error}
-                {result.distance_m != null && (
-                  <div className="mt-1">
-                    You are <strong>{result.distance_m}m</strong> away. Allowed radius: <strong>{result.radius_m}m</strong>
-                  </div>
-                )}
               </>
             )}
             <div className="mt-1">

@@ -24,7 +24,6 @@ def submit():
     code = (data.get("code") or "").strip().upper()
     student_lat = data.get("student_lat")
     student_lng = data.get("student_lng")
-    student_accuracy = float(data.get("student_accuracy") or 0)
     fingerprint_hash = data.get("fingerprint_hash") or ""
 
     if not code or student_lat is None or student_lng is None or not fingerprint_hash:
@@ -48,12 +47,11 @@ def submit():
     if dup.data:
         return jsonify({"error": "Attendance already submitted for this session"}), 409
 
-    # Haversine distance — subtract both teacher and student GPS accuracy
-    raw_distance = haversine(student_lat, student_lng, session["teacher_lat"], session["teacher_lng"])
-    teacher_accuracy = float(session.get("teacher_accuracy") or 0)
-    combined_accuracy = student_accuracy + teacher_accuracy
-    effective_distance = max(0.0, raw_distance - combined_accuracy)
-    status = "present" if effective_distance <= session["radius_m"] else "absent"
+    # Pure Haversine — real distance, no adjustments
+    distance = haversine(student_lat, student_lng, session["teacher_lat"], session["teacher_lng"])
+    distance = round(distance, 2)
+    radius = session["radius_m"]
+    status = "present" if distance <= radius else "absent"
     now_iso = datetime.now(timezone.utc).isoformat()
 
     db.table("attendance").insert({
@@ -62,19 +60,24 @@ def submit():
         "status": status,
         "student_lat": student_lat,
         "student_lng": student_lng,
-        "distance_m": round(effective_distance, 2),
+        "distance_m": distance,
         "submitted_at": now_iso,
     }).execute()
 
     if status == "absent":
         return jsonify({
-            "error": "You are outside the classroom range",
+            "error": f"You are {distance}m away. You are out of range by {round(distance - radius, 2)}m.",
             "status": "absent",
-            "distance_m": round(effective_distance, 2),
-            "radius_m": session["radius_m"],
+            "distance_m": distance,
+            "radius_m": radius,
         }), 400
 
-    return jsonify({"message": "Attendance marked present!", "status": "present", "distance_m": round(effective_distance, 2)})
+    return jsonify({
+        "message": f"Present! You are {distance}m away, within {radius}m radius by {round(radius - distance, 2)}m.",
+        "status": "present",
+        "distance_m": distance,
+        "radius_m": radius,
+    })
 
 
 @attendance_bp.get("/session/<session_id>/pdf")
