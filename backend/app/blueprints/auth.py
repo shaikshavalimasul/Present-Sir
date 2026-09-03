@@ -1,3 +1,4 @@
+import hashlib
 import bcrypt
 from flask import Blueprint, request, jsonify
 from ..db import get_db
@@ -35,14 +36,15 @@ def create_teacher():
     res = db.table("teachers").insert({"name": name, "username": username, "password_hash": pw_hash}).execute()
     return jsonify({"message": "Teacher created", "id": res.data[0]["id"]}), 201
 
-@auth_bp.post("/student/verify-fingerprint")
-def verify_fingerprint():
+@auth_bp.post("/student/verify-token")
+def verify_token():
     data = request.get_json(force=True)
-    fingerprint_hash = data.get("fingerprint_hash") or ""
-    if not fingerprint_hash:
-        return jsonify({"error": "fingerprint_hash required"}), 400
+    token = data.get("token") or ""
+    if not token:
+        return jsonify({"matched": False}), 200
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
     db = get_db()
-    res = db.table("students").select("*").eq("fingerprint_hash", fingerprint_hash).eq("has_registered", True).execute()
+    res = db.table("students").select("*").eq("fingerprint_hash", token_hash).eq("has_registered", True).execute()
     if not res.data:
         return jsonify({"matched": False}), 200
     student = res.data[0]

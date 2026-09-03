@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { getStudent } from "../auth";
+import { getToken } from "../auth";
 import api from "../api";
 import StudentNav from "../components/StudentNav";
 import useGeoLocation from "../components/useGeoLocation";
-import { getFingerprint } from "../fingerprint";
 
 export default function StudentDashboard() {
   const student = getStudent();
@@ -33,12 +33,12 @@ export default function StudentDashboard() {
     if (!code.trim()) { setError("Please enter the session code."); return; }
     setError(""); setLoading(true);
     try {
-      const fingerprint_hash = await getFingerprint();
+      const token = getToken();
       const { data } = await api.post("/attendance/submit", {
         code: code.toUpperCase(),
         student_lat: location.lat,
         student_lng: location.lng,
-        fingerprint_hash,
+        token,
       });
       setResult({ success: true, ...data });
     } catch (err) {

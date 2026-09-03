@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api";
-import { saveStudent } from "../auth";
-import { getFingerprint } from "../fingerprint";
+import { saveStudent, saveToken } from "../auth";
 
 export default function StudentRegister() {
   const [form, setForm] = useState({ name: "", admission_number: "" });
@@ -14,12 +13,12 @@ export default function StudentRegister() {
     e.preventDefault();
     setError(""); setLoading(true);
     try {
-      const fingerprint_hash = await getFingerprint();
       const { data } = await api.post("/students/register", {
         name: form.name.trim(),
         admission_number: form.admission_number.trim(),
-        fingerprint_hash,
       });
+      // Save token permanently in localStorage — this is the auto-login key
+      saveToken(data.token);
       saveStudent(data.student);
       nav("/student/dashboard");
     } catch (err) {
