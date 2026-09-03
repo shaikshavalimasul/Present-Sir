@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { getTeacher, getStudent, saveStudent } from "./auth";
 import { getFingerprint } from "./fingerprint";
@@ -12,24 +12,35 @@ import StudentEntry from "./pages/StudentEntry";
 import StudentRegister from "./pages/StudentRegister";
 import StudentDashboard from "./pages/StudentDashboard";
 
-// Auto-login student by fingerprint
+// Runs fingerprint check on every visit before showing anything
 function StudentAutoLogin({ children }) {
   const nav = useNavigate();
-  const student = getStudent();
+  const [checking, setChecking] = useState(!getStudent());
 
   useEffect(() => {
-    if (student) return;
+    if (getStudent()) { setChecking(false); return; }
     (async () => {
-      const fp = await getFingerprint();
       try {
+        const fp = await getFingerprint();
         const { data } = await api.post("/auth/student/verify-fingerprint", { fingerprint_hash: fp });
         if (data.matched) {
           saveStudent(data.student);
           nav("/student/dashboard", { replace: true });
+          return;
         }
       } catch {}
+      setChecking(false);
     })();
   }, []);
+
+  if (checking) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ fontSize: "2rem" }}>📍</div>
+        <p style={{ color: "#4a5568" }}>Checking your device…</p>
+      </div>
+    );
+  }
 
   return children;
 }

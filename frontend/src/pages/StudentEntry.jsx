@@ -1,16 +1,49 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../api";
-import { saveStudent } from "../auth";
-import { getFingerprint } from "../fingerprint";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-// This page handles both "checking fingerprint" auto-login and manual login fallback
+function isInAppBrowser() {
+  const ua = navigator.userAgent || "";
+  return /FBAN|FBAV|Instagram|WhatsApp|Snapchat|MicroMessenger|Line\/|Twitter/i.test(ua);
+}
+
 export default function StudentEntry() {
-  const [checking, setChecking] = useState(false);
-  const nav = useNavigate();
+  const [inApp, setInApp] = useState(false);
+  const currentUrl = window.location.href;
 
-  // Manual login by name + admission number (for devices that cleared data)
-  // We just redirect to register page — teacher must reset first
+  useEffect(() => {
+    setInApp(isInAppBrowser());
+  }, []);
+
+  if (inApp) {
+    return (
+      <div className="container" style={{ paddingTop: "3rem" }}>
+        <div className="card text-center">
+          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>⚠️</div>
+          <h1>Open in Chrome</h1>
+          <p className="text-muted mb-2" style={{ lineHeight: 1.7 }}>
+            You opened this link inside WhatsApp or another app.<br />
+            For attendance to work correctly, please open this in <strong>Chrome browser</strong>.
+          </p>
+          <div className="alert alert-warning">
+            Your device fingerprint only works in Chrome. Opening here will not auto-login you.
+          </div>
+          <a
+            href={currentUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-primary btn-block"
+          >
+            🌐 Open in Chrome
+          </a>
+          <p className="text-sm text-muted mt-2">
+            Or copy this link and paste it in Chrome manually:<br />
+            <strong style={{ wordBreak: "break-all", fontSize: "0.78rem" }}>{currentUrl}</strong>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container" style={{ paddingTop: "3rem" }}>
       <div className="card text-center">
